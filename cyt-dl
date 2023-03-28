@@ -24,22 +24,20 @@ if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
     Default directory is \e[033m"`cygpath -u 'C:\Users\\'$(whoami)'\Downloads'`"\e[0m folder, i.e if you omit destination folder"
     exit 0
 fi
-# default option for storing downloaded content in Downloads directory
-#this option works only if you change Downloads directory to match your current user
 
 LOG_FILE=~/.cyt-list.sh
 
 #assign dlc to downloads folder
 if [[ $# -eq 3 && -d $3 ]];then
-    dlc="$3"
-    cd $dlc
+    dlc="$(realpath "$3")"
+    cd "$dlc"
 elif [[ $# -eq 4 && $2 == -l && -d $4 ]];then
-    dlc="$4"
-    cd $dlc
+    dlc="$(realpath "$4")"
+    cd "$dlc"
 elif [[ $# -eq 2 || $# -eq 3 && $2 == -l ]];then
-    #downloads-default
+    # default option for storing downloaded content in Downloads directory
     dlc="`cygpath -u 'C:\Users\\'$(whoami)'\Downloads'`"
-    cd $dlc
+    cd "$dlc"
 fi
 
 #start of main code
@@ -120,7 +118,6 @@ aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+2
 cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250/hls-2176/http/mpeg"
 
 #default storage as windows downloads folder
-#a-v
 if [[ $# -eq 2 && -d $dlc && $1 == a ]]; then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2
 elif [[ $# -eq 2 && -d $dlc && $1 == b ]]; then
@@ -131,8 +128,8 @@ elif [[ $# -eq 2 && -d $dlc && $1 == d ]]; then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $2
 elif [[ $# -eq 2 && -d $dlc && $1 == v ]];then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 --embed-subs $2
+
 #for known folders do,
-#a-v
 elif [[ $# -eq 3 && -d $dlc && $1 == a ]]; then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2
 elif [[ $# -eq 3 && -d $dlc && $1 == b ]]; then
@@ -280,5 +277,4 @@ else
     \e[031m--> Also check to confirm if the \e[034mdestination\e[031m folder exists\e[0m"
     rm -rf $LOG_FILE
     exit 1
-    #end of code
 fi
