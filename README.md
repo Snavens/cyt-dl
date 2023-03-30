@@ -34,7 +34,7 @@ If you have python installed then install with pip install yt-dlp and skip downl
 
 Download the binary file by using link:
 
-    wget https://github.com/Snavens/cyt-dl/releases/download/cyt-dl_v0.8.0/cyt-dl
+    wget https://github.com/Snavens/cyt-dl/releases/download/cyt-dl_v0.8.5/cyt-dl
     mv -vf cyt-dl /usr/local/bin # or ~/bin
   
 Or simply clone with:
