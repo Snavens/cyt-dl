@@ -56,7 +56,7 @@ fnd() {
                 echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
                 echo -en "\e[033mAdding to playlist:\e[094m"
             }
-            if [[ $(command -v vlc.exe) || ! $(ps -ef|grep vlc) ]];then
+            if [[ $(command -v vlc.exe) && ! $(ps -ef|grep vlc) ]];then
                 vlc_player "$@"
             else
                 mpv_player "$@"
@@ -107,7 +107,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
                     echo -e "\e[031mno files found!"
                 fi
             }
-            if [[ $(command -v vlc.exe) || ! $(ps -ef|grep vlc) ]];then
+            if [[ $(command -v vlc.exe) && ! $(ps -ef|grep vlc) ]];then
                 vlc_player "$@"
             else
                 mpv_player "$@"
