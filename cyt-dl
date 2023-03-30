@@ -52,7 +52,15 @@ fnd() {
                 list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
                 echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &">${tmp_scrpt}
             }
-            mpv_player "$@"
+            vlc_player() {
+                echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
+                echo -en "\e[033mAdding to playlist:\e[094m"
+            }
+            if [[ $(command -v vlc.exe) || ! $(ps -ef|grep vlc) ]];then
+                vlc_player "$@"
+            else
+                mpv_player "$@"
+            fi
             
             if [[ $(cat ${tmp_scrpt}) ]];then
                 echo -en "\e[033mPlaying:\e[094m"
@@ -86,7 +94,24 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
                     echo -e "\e[031mno files found!"
                 fi
             }
-            mpv_player "$@"
+            vlc_player() {
+                echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
+                if [[ $(cat ${tmp_scrpt}) ]];then
+                    echo -en "\e[033mAdding to playlist:\e[094m"
+                    bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done) 
+                    echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
+                    #remove temp files
+                    rm ${tmp_scrpt} >/dev/null 2>&1
+                else
+                    echo -e "\e[031mno files found!"
+                fi
+            }
+            if [[ $(command -v vlc.exe) || ! $(ps -ef|grep vlc) ]];then
+                vlc_player "$@"
+            else
+                mpv_player "$@"
+            fi
             
         elif [[ $# -eq 3 && ! -d "$2" ]];then
             echo -e "\e[031mThe source folder doesn't exist!"
@@ -103,15 +128,32 @@ fnd_p() {
     else
         p=p
     fi
-    LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
-    if [[ -z $LOG ]];then return;fi
-    if command -v mpv.exe &>/dev/null ;then
-        fnd $p "$dlc" "$LOG" 2>/dev/null
+
+    if [[ $(grep "+" <<< $(grep -oP '(?<=format\(s\):\s).*(?=)' ${LOG_FILE})) ]];then
+        formats=2
     else
-        echo -e "\e[031mYou need to download mpv to play file!\e[0m"
-        exit $?
+        formats=1
     fi
-    echo "fnd $p \"$dlc\" "$LOG" 2>/dev/null">${LOG_FILE}
+
+    if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) == $formats \
+        || $(grep "download]\s100%" ${LOG_FILE}|wc -l) > $formats ]];then
+        LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
+        if [[ ! -z $LOG ]];then 
+            if command -v mpv.exe &>/dev/null ;then
+                fnd $p "$dlc" "$LOG" 2>/dev/null
+            else
+                echo -e "\e[031mYou need to download mpv to play file!\e[0m"
+                exit $?
+            fi
+            echo "fnd $p \"$dlc\" "$LOG" 2>/dev/null">${LOG_FILE}
+        else
+            return
+        fi
+        
+    else
+        echo -e "\e[031mDownload incomplete!\e[0m"
+        return
+    fi
 
 }
 aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
