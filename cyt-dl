@@ -49,12 +49,30 @@ fnd() {
             cd "$2"
             mpv_player() {
                 echo "$(find -iname "*$3*" -exec echo \"{}\" \;)">${tmp_scrpt}
-                list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &">${tmp_scrpt}
+                if [[ $(cat ${tmp_scrpt}) ]];then
+                    echo -en "\e[033mPlaying:\e[094m"
+                    list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                    bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
+                    echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                    #remove temp files
+                    rm ${tmp_scrpt} >/dev/null 2>&1
+                else
+                    echo -e "\e[031mno files found!"
+                fi
             }
             vlc_player() {
                 echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
-                echo -en "\e[033mAdding to playlist:\e[094m"
+                if [[ $(cat ${tmp_scrpt}) ]];then
+                    echo -en "\e[033mAdding to playlist:\e[094m"
+                    bash ${tmp_scrpt}
+                    echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
+                    #remove temp files
+                    rm ${tmp_scrpt} >/dev/null 2>&1
+                else
+                    echo -e "\e[031mno files found!"
+                fi
             }
             if [[ $(command -v vlc.exe) && ! $(ps -ef|grep vlc) ]];then
                 vlc_player "$@"
@@ -62,16 +80,6 @@ fnd() {
                 mpv_player "$@"
             fi
             
-            if [[ $(cat ${tmp_scrpt}) ]];then
-                echo -en "\e[033mPlaying:\e[094m"
-                echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
-                bash ${tmp_scrpt} >&2 ;
-                #remove temp files
-                rm ${tmp_scrpt} >/dev/null 2>&1
-            else
-                echo -e "\e[031mno files found!"
-            fi
         elif [[ $# -eq 3 && ! -d "$2" ]];then
             echo -e "\e[031mThe source folder doesn't exist!"
         fi
@@ -87,7 +95,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
                     list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
                     bash<<<$(echo "mpv.exe --loop-file=3 --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &")
                     echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                     #remove temp files
                     rm ${tmp_scrpt} >/dev/null 2>&1
                 else
