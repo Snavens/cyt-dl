@@ -36,7 +36,11 @@ elif [[ $# -eq 4 && $2 == -l && -d $4 ]];then
     cd "$dlc"
 elif [[ $# -eq 2 || $# -eq 3 && $2 == -l ]];then
     # default option for storing downloaded content in Downloads directory
-    dlc="`cygpath -u 'C:\Users\\'$(whoami)'\Downloads'`"
+    if [[ ! -z $HOMEDRIVE && ! -z $HOMEPATH ]];then
+        dlc="`cygpath -u ''$HOMEDRIVE'\\'$HOMEPATH'\Downloads'`"
+    else
+        dlc="`cygpath -u 'C:\Users\\'$(whoami)'\Downloads'`"
+    fi
     cd "$dlc"
 fi
 
@@ -47,36 +51,54 @@ fnd() {
         p)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            mpv_player() {
-                echo "$(find -iname "*$3*" -exec echo \"{}\" \;)">${tmp_scrpt}
-                if [[ $(cat ${tmp_scrpt}) ]];then
-                    echo -en "\e[033mPlaying:\e[094m"
-                    list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                    bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
-                    echo -e "
-$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                    #remove temp files
-                    rm ${tmp_scrpt} >/dev/null 2>&1
-                else
-                    echo -e "\e[031mno files found!"
-                fi
-            }
-            vlc_player() {
-                echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
-                if [[ $(cat ${tmp_scrpt}) ]];then
-                    echo -en "\e[033mAdding to playlist:\e[094m"
-                    bash ${tmp_scrpt}
-                    echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
-                    #remove temp files
-                    rm ${tmp_scrpt} >/dev/null 2>&1
-                else
-                    echo -e "\e[031mno files found!"
-                fi
-            }
-            if [[ $(command -v vlc.exe) && ! $(ps -ef|grep vlc) ]];then
+            if [[ $(command -v mpv-console-launcher.exe) && ! $(ps -ef|grep mpv) ]];then
+                mpv_player() {
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                        bash<<<$(echo "mpv-console-launcher.exe --fs --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
+                        echo -e "
+$(cat ${tmp_scrpt}|grep -v ".json"|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                mpv_player "$@"
+            elif [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' || -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' && ! $(ps -ef|grep vlc) ]];then
+                if [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files (x86)/VideoLAN/VLC/vlc.exe')'"
+                elif [[ -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files/VideoLAN/VLC/vlc.exe')'" ;fi
+                vlc_player() {
+                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mAdding to playlist:\e[094m"
+                        bash ${tmp_scrpt}
+                        echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
                 vlc_player "$@"
             else
+                mpv_player() {
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                        bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
+                        echo -e "
+$(cat ${tmp_scrpt}|grep -v ".json"|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
                 mpv_player "$@"
             fi
             
@@ -88,37 +110,55 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
 		pl)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            mpv_player() {
-                find -iname "*$3*" -exec echo "\"{}\"" \; >${tmp_scrpt}
-                if [[ $(cat ${tmp_scrpt}) ]];then
-                    echo -en "\e[033mPlaying:\e[094m"
-                    list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                    bash<<<$(echo "mpv.exe --loop-file=3 --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &")
-                    echo -e "
+            if [[ $(command -v mpv-console-launcher.exe) && ! $(ps -ef|grep mpv) ]];then
+                mpv_player() {
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
+                        bash<<<$(echo "mpv-console-launcher.exe --loop-file=3 --fs --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &"|grep -v ".json")
+                        echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                    #remove temp files
-                    rm ${tmp_scrpt} >/dev/null 2>&1
-                else
-                    echo -e "\e[031mno files found!"
-                fi
-            }
-            vlc_player() {
-                echo "$(find -iname "*$3*" -exec echo "vlc.exe -q --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)">${tmp_scrpt}
-                if [[ $(cat ${tmp_scrpt}) ]];then
-                    echo -en "\e[033mAdding to playlist:\e[094m"
-                    bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done) 
-                    echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|nl)\e[032m";sleep 1
-                    #remove temp files
-                    rm ${tmp_scrpt} >/dev/null 2>&1
-                else
-                    echo -e "\e[031mno files found!"
-                fi
-            }
-            if [[ $(command -v vlc.exe) && ! $(ps -ef|grep vlc) ]];then
-                vlc_player "$@"
-            else
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
                 mpv_player "$@"
+            elif [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' || -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' && ! $(ps -ef|grep vlc) ]];then
+                if [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files (x86)/VideoLAN/VLC/vlc.exe')'"
+                elif [[ -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files/VideoLAN/VLC/vlc.exe')'" ;fi
+                vlc_player() {
+                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mAdding to playlist:\e[094m"
+                        bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done) 
+                        echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                vlc_player "$@"
+            else 
+                mpv_player() {
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                        if [[ $(cat ${tmp_scrpt}) ]];then
+                            echo -en "\e[033mPlaying:\e[094m"
+                            list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
+                            bash<<<$(echo "mpv.exe --loop-file=3 --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &"|grep -v ".json")
+                            echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                            #remove temp files
+                            rm ${tmp_scrpt} >/dev/null 2>&1
+                        else
+                            echo -e "\e[031mno files found!"
+                        fi
+                    }
+                    mpv_player "$@"  
             fi
             
         elif [[ $# -eq 3 && ! -d "$2" ]];then
@@ -148,7 +188,7 @@ fnd_p() {
         LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
         if [[ ! -z $LOG ]];then 
             if command -v mpv.exe &>/dev/null ;then
-                fnd $p "$dlc" "$LOG" 2>/dev/null
+                fnd $p "$dlc" "$LOG"
             else
                 echo -e "\e[031mYou need to download mpv to play file!\e[0m"
                 exit $?
