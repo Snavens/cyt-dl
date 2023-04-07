@@ -57,9 +57,9 @@ fnd() {
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe --fs --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv-console-launcher.exe --fs $list >/dev/null 2>&1 &")
                         echo -e "
-$(cat ${tmp_scrpt}|grep -v ".json"|nl)\e[032m";sleep 1
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
                         rm ${tmp_scrpt} >/dev/null 2>&1
                     else
@@ -92,7 +92,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
                         bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
                         echo -e "
-$(cat ${tmp_scrpt}|grep -v ".json"|nl)\e[032m";sleep 1
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
                         rm ${tmp_scrpt} >/dev/null 2>&1
                     else
@@ -116,7 +116,7 @@ $(cat ${tmp_scrpt}|grep -v ".json"|nl)\e[032m";sleep 1
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe --loop-file=3 --fs --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &"|grep -v ".json")
+                        bash<<<$(echo "mpv-console-launcher.exe --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
