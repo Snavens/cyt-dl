@@ -13,7 +13,7 @@ formats="
     \e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
     --> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
     --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
-    --> Use \e[034moption\e[0m \e[035m-s\e[0m to stream files.
+    --> Use \e[034moption\e[0m \e[035m-s\e[0m(format) to stream files.
     \e[096mWhen download and play option is selected:\e[0m
     --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
     --> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n"
@@ -57,7 +57,7 @@ fnd() {
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe --fs $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv-console-launcher.exe -v --fs $list >/dev/null 2>&1 &")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
@@ -116,7 +116,7 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
+                        bash<<<$(echo "mpv-console-launcher.exe -v --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
@@ -344,23 +344,33 @@ elif [[ $# -eq 1 && $1 == -p ]];then
         exit 1
     fi
 
-elif [[ $1 == -s ]];then #stream 
+elif [[ $1 == -s* ]];then #stream 
     if [[ $# -eq 2 ]];then
         if command -v mpv.exe &>/dev/null ;then
-            formats="
-    \e[035ma\e[0m: 1080p Video
-    \e[035mb\e[0m: 1440p Video
-    \e[035mc\e[0m: 720p Video
-    \e[035md\e[0m: mp3 Audio
-    \e[035mv\e[0m: if all of the above formats fail or non-youtube videos\n"
-            echo -en "select format\n$formats \n -: "
-            read opt
-            case $opt in
-                a) opt=$aID;;b) opt=$bID;;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;
-                *) echo "please select the given formats!";exit 1;;
+        case $1 in
+            -sa) opt=$aID;;-sb) opt=$bID;;-sc) opt=$cID;;-sd) opt=$dID;;-sv) opt=$vID;;
+                *) 
+                formats="
+        \e[035ma\e[0m: 1080p Video
+        \e[035mb\e[0m: 1440p Video
+        \e[035mc\e[0m: 720p Video
+        \e[035md\e[0m: mp3 Audio
+        \e[035mv\e[0m: if all of the above formats fail or non-youtube videos\n"
+                echo -en "select format\n$formats \n -: "
+                read opt
+                case $opt in
+                    a) opt=$aID;;b) opt=$bID;;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;
+                    *) echo "please select the given formats!";exit 1;;
+                esac
+                ;;
             esac
-            mpv.exe --ytdl-format=$opt --fs "$2"
-            echo "mpv.exe --ytdl-format=$opt --fs $2 2>/dev/null">${LOG_FILE}
+            if [[ $(command -v mpv-console-launcher.exe) ]];then
+                mpv-console-launcher.exe -v --ytdl-format=$opt --fs "$2"
+                echo "mpv-console-launcher.exe -v --ytdl-format=$opt --fs $2 2>/dev/null">${LOG_FILE}
+            else
+                mpv.exe --ytdl-format=$opt --fs --player-operation-mode=pseudo-gui "$2"
+                echo "mpv.exe --ytdl-format=$opt --fs --player-operation-mode=pseudo-gui $2 2>/dev/null">${LOG_FILE}
+            fi
         else
             echo -e "\e[031mYou need to download mpv to stream file!\e[0m"
         fi
