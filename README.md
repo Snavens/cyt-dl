@@ -36,7 +36,7 @@ clone with:
 
     git clone https://github.com/Snavens/cyt-dl.git
     
-    mv -vf cyt/cyt-dl /usr/local/bin # or ~/bin
+    mv -vf cyt/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
   
