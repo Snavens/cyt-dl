@@ -20,8 +20,6 @@ works on cygwin-like terminals
 
 -> copy [2] to [1] C:\ffmpeg\bin folder.
 
-![Screenshot (46)](https://user-images.githubusercontent.com/35012707/227935537-ff14bec2-9fb4-48de-9f28-4875a8585b21.png)
-
 -> edit the system environment variables in environment variables, add C:\ffmpeg\bin folder to path.
 
 If you have python installed then install with pip install yt-dlp and skip downloading [2]
@@ -34,17 +32,13 @@ If you have python installed then install with pip install yt-dlp and skip downl
 
 Download the binary file by using link:
 
-    wget https://github.com/Snavens/cyt-dl/releases/download/cyt-dl_v0.8.5/cyt-dl
-    mv -vf cyt-dl /usr/local/bin # or ~/bin
-  
-Or simply clone with:
+clone with:
 
     git clone https://github.com/Snavens/cyt-dl.git
+    
     mv -vf cyt/cyt-dl /usr/local/bin # or ~/bin
-  
-Copy it to your local path and set permissions to 777
-
-     chmod 777 /usr/local/bin/cyt-dl
+    
+    chmod 777 /usr/local/bin/cyt-dl
   
 Make sure the folder is in path
 If everything is set up, now you may start using it.
