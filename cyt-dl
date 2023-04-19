@@ -355,7 +355,6 @@ elif [[ $1 == -s* ]];then #stream
             esac
             if [[ $(command -v mpv-console-launcher.exe) ]];then
                 mpv-console-launcher.exe -v --ytdl-format=$opt --fs "$2"
-                echo "mpv-console-launcher.exe -v --ytdl-format=$opt --fs $2 2>/dev/null">${LOG_FILE}
             else
                 mpv.exe --ytdl-format=$opt --fs --player-operation-mode=pseudo-gui "$2"
             fi
