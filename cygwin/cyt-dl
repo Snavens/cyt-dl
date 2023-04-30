@@ -65,6 +65,22 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                     fi
                 }
                 mpv_player "$@"
+            elif [[ $(command -v mpv.exe) && ! $(ps -ef|grep mpv) && ! $(command -v mpv-console-launcher.exe) ]];then
+                mpv_player() {
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                        bash<<<$(echo "mpv.exe -v --fs $list >/dev/null 2>&1 &")
+                        echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                mpv_player "$@"
             elif [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' || -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' && ! $(ps -ef|grep vlc) ]];then
                 if [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files (x86)/VideoLAN/VLC/vlc.exe')'"
                 elif [[ -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files/VideoLAN/VLC/vlc.exe')'" ;fi
@@ -115,6 +131,22 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
                         bash<<<$(echo "mpv-console-launcher.exe -v --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
+                        echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                mpv_player "$@"
+            elif [[ $(command -v mpv.exe) && ! $(ps -ef|grep mpv) && ! $(command -v mpv-console-launcher.exe) ]];then
+                mpv_player() {
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
+                        bash<<<$(echo "mpv.exe -v --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
