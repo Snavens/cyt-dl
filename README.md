@@ -34,7 +34,7 @@ If you have python installed then install with pip install yt-dlp and skip downl
  
   1. ffmpeg (download the normal way you install other packages dependind on your distribution eg apt-get install ffmpeg ie debian/kali)
   
-  2. yt-dlp (same thing as in [1])
+  2. yt-dlp (same thing as in [1] / pip install yt-dlp)
   
   3. mpv (same thing as in [1])
 
