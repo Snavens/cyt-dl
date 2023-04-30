@@ -2,9 +2,11 @@
 
 cyt-dl is an all-in-one tool to download/play youtube video/audio files.
 
-works on cygwin-like terminals
+works on cygwin-like terminals and/or GNUlinux
 
 ## SET UP by downloading ffmpeg, yt-dlp & mpv
+
+IF YOU ARE USING WINDOWS
 
  1. ffmpeg
 
@@ -27,23 +29,31 @@ If you have python installed then install with pip install yt-dlp and skip downl
  3. mpv
 
      link: <https://www.microsoft.com/store/productId/9P3JFR0CLLL6>
+     
+ IF YOU ARE USING LINUX
+ 
+  1. ffmpeg (download the normal way you install other packages dependind on your distribution eg apt-get install ffmpeg ie debian/kali)
+  
+  2. yt-dlp (same thing as in [1])
+  
+  3. mpv (same thing as in [1])
 
 ## how to use
-
-Download the binary file by using link:
 
 clone with:
 
     git clone https://github.com/Snavens/cyt-dl.git
     
-    mv -vf cyt/cyt-dl /usr/local/bin
+    mv -vf cyt/<folder>/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
-  
+
+FOR WINDOWS USERS AGAIN
+
 Make sure the folder is in path
 If everything is set up, now you may start using it.
 
-Example of how to use:
+General usage examples:
 
 stream (file)s
 
