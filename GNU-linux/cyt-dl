@@ -157,11 +157,7 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
 		;;
         s)
         shift
-        if [[ $(command -v mpv-console-launcher.exe) ]];then
-            mpv-console-launcher.exe $@
-        else
-            mpv.exe $@
-        fi
+        mpv $@
         ;;
 	esac
 
