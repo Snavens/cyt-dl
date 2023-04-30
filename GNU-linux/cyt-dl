@@ -45,7 +45,7 @@ fnd() {
         p)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) > 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) == 1 ]];then
                 mpv_player() {
                     echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
@@ -76,6 +76,22 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
                     fi
                 }
                 vlc_player "$@"
+            else
+                mpv_player() {
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                        bash<<<$(echo "mpv -v --fs $list >/dev/null 2>&1 &")
+                        echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                mpv_player "$@"
             fi
             
         elif [[ $# -eq 3 && ! -d "$2" ]];then
@@ -86,7 +102,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
 		pl)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) > 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) == 1 ]];then
                 mpv_player() {
                     find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
@@ -117,6 +133,22 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
                     fi
                 }
                 vlc_player "$@"  
+            else
+                mpv_player() {
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                    if [[ $(cat ${tmp_scrpt}) ]];then
+                        echo -en "\e[033mPlaying:\e[094m"
+                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
+                        bash<<<$(echo "mpv -v --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
+                        echo -e "
+$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
+                        #remove temp files
+                        rm ${tmp_scrpt} >/dev/null 2>&1
+                    else
+                        echo -e "\e[031mno files found!"
+                    fi
+                }
+                mpv_player "$@"
             fi
             
         elif [[ $# -eq 3 && ! -d "$2" ]];then
@@ -373,4 +405,3 @@ else
     rm -rf $LOG_FILE
     exit 1
 fi
-
