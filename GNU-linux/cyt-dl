@@ -45,7 +45,7 @@ fnd() {
         p)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) > 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) > 1 ]];then
                 mpv_player() {
                     echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
@@ -86,7 +86,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
 		pl)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) > 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) > 1 ]];then
                 mpv_player() {
                     find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
