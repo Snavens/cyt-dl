@@ -37,8 +37,24 @@ If you have python installed then install with pip install yt-dlp and skip downl
   2. yt-dlp (same thing as in [1] / pip install yt-dlp)
   
   3. mpv (same thing as in [1])
+  
+  FOR ANDROID USE:
+  
+  1. Download termux 
+  
+       link: <https://f-droid.org/repo/com.termux_118.apk>
+       
+Execute the commands (on your installed termux):
+
+    apt-get update ; apt-get upgrade \
+    apt install mpv ffmpeg python python-pip \
+    pip install yt-dlp
+    
+  
 
 ## how to use
+
+LINUX/CYGWIN
 
 clone with:
 
@@ -47,6 +63,14 @@ clone with:
     mv -vf cyt/<folder>/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
+    
+ANDROID
+
+    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && cp -vrf cyt/Android/termux-url-opener ~/bin
+    
+    termux-setup-storage && chmod 755 ~/bin/termux-url-opener
+    
+go to app settings and give termux permission to appear on top and you are done now all you have to do is share videos directly to termux app 
 
 FOR WINDOWS USERS AGAIN
 
