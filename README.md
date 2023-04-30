@@ -54,13 +54,17 @@ Execute the commands (on your installed termux):
 
 ## how to use
 
-LINUX/CYGWIN
+LINUX
+
+    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt/GNU-linux/cyt-dl /usr/local/bin
+    
+    chmod 777 /usr/local/bin/cyt-dl
+
+CYGWIN
 
 clone with:
 
-    git clone https://github.com/Snavens/cyt-dl.git
-    
-    mv -vf cyt/<folder>/cyt-dl /usr/local/bin
+    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt/cygwin/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
     
