@@ -45,7 +45,7 @@ fnd() {
         p)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) == 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
                 mpv_player() {
                     echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
@@ -102,7 +102,7 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
 		pl)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep vlc|wc -l) == 1 ]];then
+            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
                 mpv_player() {
                     find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
@@ -188,7 +188,7 @@ fnd_p() {
         formats=1
     fi
 
-    if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) == $formats \
+    if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) < 2formats \
         || $(grep "download]\s100%" ${LOG_FILE}|wc -l) > $formats ]];then
         LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
         if [[ ! -z $LOG ]];then 
