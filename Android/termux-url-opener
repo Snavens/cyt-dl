@@ -6,27 +6,27 @@
 # source -- https://github.com/Snavens/cyt-dl
 # 
 formats="
-    \e[035ma\e[0m: Downloads 1080p Video
-    \e[035mb\e[0m: Downloads 1440p Video
-    \e[035mc\e[0m: Downloads 720p Video
-    \e[035md\e[0m: Downloads mp3 Audio
-    \e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
-    --> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
-    --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
-    --> Use \e[034moption\e[0m \e[035m-s\e[0m(format) to stream files.
-    \e[096mWhen download and play option is selected:\e[0m
-    --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
-    --> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n"
+\e[035ma\e[0m: Downloads 1080p Video
+\e[035mb\e[0m: Downloads 1440p Video
+\e[035mc\e[0m: Downloads 720p Video
+\e[035md\e[0m: Downloads mp3 Audio
+\e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
+--> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
+--> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
+--> Use \e[034moption\e[0m \e[035m-s\e[0m(format) to stream files.
+\e[096mWhen download and play option is selected:\e[0m
+--> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
+--> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n"
 #print usage and help
 if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
     echo "Usage: $(basename $0) {OPTION} <url> | <destination>"
     echo -e "Options:$formats
-    Default videos directory is /sdcard/YoutubeVideos and audio files stored in /sdcard/YoutubeAudio"
+Default videos directory is /sdcard/YoutubeVideos and audio files stored in /sdcard/YoutubeAudio"
     exit 0
 fi
 
 echo -en "$formats\n
-    please give your input -: "
+please give your input -: "
 read opt
 if [[ ! -d /sdcard/YoutubeVideos ]];then
     mkdir /sdcard/YoutubeVideos
@@ -37,9 +37,11 @@ fi
 case $opt in 
     a* | b* | c* | v*)
     cd /sdcard/YoutubeVideos
+    dlc=/sdcard/YoutubeVideos
     ;;
     d*)
     cd /sdcard/YoutubeAudio
+    dlc=/sdcard/YoutubeAudio
     ;;
     -s*)
     echo "streaming..."
@@ -115,8 +117,8 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
 	esac
 
 }
-tmp_scrpt=/tmp/cyt-fnd.sh
-LOG_FILE=/tmp/.cyt-tmp
+tmp_scrpt=~/cyt-fnd.sh
+LOG_FILE=~/.cyt-tmp
 TEMP_FILE=~/.cyt-hist.tmp
 fnd_p() {
    
