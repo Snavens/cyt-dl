@@ -56,7 +56,7 @@ Execute the commands (on your installed termux):
 
 LINUX
 
-    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt/GNU-linux/cyt-dl /usr/local/bin
+    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt-dl/GNU-linux/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
 
@@ -64,13 +64,13 @@ CYGWIN
 
 clone with:
 
-    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt/cygwin/cyt-dl /usr/local/bin
+    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt-dl/cygwin/cyt-dl /usr/local/bin
     
     chmod 777 /usr/local/bin/cyt-dl
     
 ANDROID
 
-    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && cp -vrf cyt/Android/termux-url-opener ~/bin
+    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && cp -vrf cyt-dl/Android/termux-url-opener ~/bin
     
     termux-setup-storage && chmod 755 ~/bin/termux-url-opener
     
