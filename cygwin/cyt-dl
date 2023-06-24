@@ -10,6 +10,7 @@ formats="
     \e[035mb\e[0m: Downloads 1440p Video
     \e[035mc\e[0m: Downloads 720p Video
     \e[035md\e[0m: Downloads mp3 Audio
+    \e[035me\e[0m: Downloads 2160p Video
     \e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
     --> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
     --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
@@ -25,6 +26,17 @@ if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
     exit 0
 fi
 
+check_command(){
+    if ! command -v $@ &>/dev/null ;then
+        echo -e "\e[091m$@ not found on system..quitting"
+    fi
+    return
+}
+check_command ffmpeg && check_command yt-dlp
+if [[ $(check_command ffmpeg) || $(check_command yt-dlp) ]];then
+    exit 1
+fi
+
 LOG_FILE=~/.cyt-list.sh
 
 #assign dlc to downloads folder
@@ -38,8 +50,14 @@ elif [[ $# -eq 2 || $# -eq 3 && $2 == -l ]];then
     # default option for storing downloaded content in Downloads directory
     if [[ ! -z $HOMEDRIVE && ! -z $HOMEPATH ]];then
         dlc="`cygpath -u ''$HOMEDRIVE'\\'$HOMEPATH'\Downloads'`"
+        if [[ ! -d $dlc ]];then
+            mkdir $dlc
+        fi
     else
         dlc="`cygpath -u 'C:\Users\\'$(whoami)'\Downloads'`"
+        if [[ ! -d $dlc ]];then
+            mkdir $dlc
+        fi
     fi
     cd "$dlc"
 fi
@@ -51,13 +69,13 @@ fnd() {
         p)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv-console-launcher.exe) && ! $(ps -ef|grep mpv) ]];then
+            if [[ $(command -v mpv.exe) && ! $(ps -ef|grep mpv) ]];then
                 mpv_player() {
-                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -vE ".json|.part">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe -v --fs $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui -v $list >/dev/null 2>&1 &")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
@@ -71,12 +89,12 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                 if [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files (x86)/VideoLAN/VLC/vlc.exe')'"
                 elif [[ -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files/VideoLAN/VLC/vlc.exe')'" ;fi
                 vlc_player() {
-                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".json">${tmp_scrpt}
+                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -vE ".json|.part">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mAdding to playlist:\e[094m"
                         bash ${tmp_scrpt}
                         echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -vE ".json|.part"|nl)\e[032m";sleep 1
                         #remove temp files
                         rm ${tmp_scrpt} >/dev/null 2>&1
                     else
@@ -86,11 +104,11 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
                 vlc_player "$@"
             else
                 mpv_player() {
-                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json">${tmp_scrpt}
+                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -vE ".json|.part">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv.exe --player-operation-mode=pseudo-gui -v $list >/dev/null 2>&1 &")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
@@ -110,13 +128,13 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
 		pl)
 		if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv-console-launcher.exe) && ! $(ps -ef|grep mpv) ]];then
+            if [[ $(command -v mpv.exe) && ! $(ps -ef|grep mpv) ]];then
                 mpv_player() {
-                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -vE ".json|.part" >${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv-console-launcher.exe -v --loop-file=3 --fs$list >/dev/null 2>&1 &"|grep -v ".json")
+                        bash<<<$(echo "mpv.exe -v --loop-file=3 --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &"|grep -vE ".json|.part")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         #remove temp files
@@ -130,12 +148,12 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                 if [[ -f 'C:\Program Files (x86)\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files (x86)/VideoLAN/VLC/vlc.exe')'"
                 elif [[ -f 'C:\Program Files\VideoLAN\VLC\vlc.exe' ]];then vlc="'$(cygpath -u '/cygdrive/c/Program Files/VideoLAN/VLC/vlc.exe')'" ;fi
                 vlc_player() {
-                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".json">${tmp_scrpt}
+                    echo "$(find -iname "*$3*" -exec echo "$vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -vE ".json|.part">${tmp_scrpt}
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mAdding to playlist:\e[094m"
                         bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done) 
                         echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -vE ".json|.part"|nl)\e[032m";sleep 1
                         #remove temp files
                         rm ${tmp_scrpt} >/dev/null 2>&1
                     else
@@ -145,11 +163,11 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".json"|nl)\e[032m";sleep 1
                 vlc_player "$@"
             else 
                 mpv_player() {
-                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".json" >${tmp_scrpt}
+                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -vE ".json|.part" >${tmp_scrpt}
                         if [[ $(cat ${tmp_scrpt}) ]];then
                             echo -en "\e[033mPlaying:\e[094m"
                             list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                            bash<<<$(echo "mpv.exe --loop-file=3 --player-operation-mode=pseudo-gui$list >/dev/null 2>&1 &"|grep -v ".json")
+                        bash<<<$(echo "mpv.exe -v --loop-file=3 --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &"|grep -vE ".json|.part")
                             echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                             #remove temp files
@@ -165,14 +183,25 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
             echo -e "\e[031mThe source folder doesn't exist!"
         fi
 		;;
+        s)
+        shift
+        mpv.exe --player-operation-mode=pseudo-gui $@
+        ;;
 	esac
 
 }
-tmp_scrpt=~/.fnd.sh
-
+tmp_scrpt=/tmp/cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}'`.sh
+LOG_FILE=/tmp/.cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`
+HIST_FILE=~/.cyt-hist.tmp
 fnd_p() {
+   
     if [[ $1 == -l ]];then
         shift;p=pl
+    elif [[ $1 == -s ]];then
+        shift
+        echo "s $@">${HIST_FILE}
+        fnd `cat ${HIST_FILE}` 
+        return
     else
         p=p
     fi
@@ -193,162 +222,200 @@ fnd_p() {
                 echo -e "\e[031mYou need to download mpv to play file!\e[0m"
                 exit $?
             fi
-            echo "fnd $p \"$dlc\" "$LOG" 2>/dev/null">${LOG_FILE}
+            echo "$p \"$dlc\" "$LOG"">${HIST_FILE}
         else
             return
         fi
         
     else
-        echo -e "\e[031mDownload incomplete!\e[0m"
+        echo -e "Download failed!"
         return
     fi
+    rm ${LOG_FILE} >/dev/null 2>&1
 
 }
+#check requirements
+check_command(){
+	if [[ ! $(command -v $@) ]];then
+        echo -en "\e[091mcommand $@ not found! "
+        return
+    fi
+}
+check_command yt-dlp && check_command ffmpeg
+
+if [[ $(check_command yt-dlp) || $(check_command ffmpeg) ]];then
+    echo "Quiting.."
+    exit 1
+fi
 aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
-cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg
+cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg/fallback
+eID="337+140"/"315+251"/"337+251"/"315+140"
+add_info="--embed-subs --sub-langs=en-orig,en"
 
 #default storage as windows downloads folder
 if [[ $# -eq 2 && -d $dlc && $1 == a ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == b ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == c ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == d ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == v ]];then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 $add_info "$2"
+elif [[ $# -eq 2 && -d $dlc && $1 == e ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID --merge-output-format mp4 $add_info "$2"
 
 #for known folders do,
 elif [[ $# -eq 3 && -d $dlc && $1 == a ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 3 && -d $dlc && $1 == b ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 3 && -d $dlc && $1 == c ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 3 && -d $dlc && $1 == d ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$2"
 elif [[ $# -eq 3 && -d $dlc && $1 == v ]];then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 --embed-subs $2
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 $add_info "$2"
+elif [[ $# -eq 3 && -d $dlc && $1 == e ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID --merge-output-format mp4 $add_info "$2"
 
 #default storage as windows downloads folder
 elif [[ $# -eq 2 && -d $dlc && $1 == ap ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 2 && -d $dlc && $1 == bp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 2 && -d $dlc && $1 == cp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 2 && -d $dlc && $1 == dp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 2 && -d $dlc && $1 == vp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p
+elif [[ $# -eq 2 && -d $dlc && $1 == ep ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $eID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 #default storage as windows downloads folder and if loop enabled, do
 elif [[ $# -eq 3 && -d $dlc && $1 == ap && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 3 && -d $dlc && $1 == bp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 3 && -d $dlc && $1 == cp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 3 && -d $dlc && $1 == dp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 3 && -d $dlc && $1 == vp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p -l
+elif [[ $# -eq 3 && -d $dlc && $1 == ep && $2 == -l ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $eID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 #for known downloads directory, do
 elif [[ $# -eq 3 && -d $3 && $1 == ap ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 3 && -d $3 && $1 == bp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 3 && -d $3 && $1 == cp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 3 && -d $3 && $1 == dp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $# -eq 3 && -d $3 && $1 == vp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $2 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p
+elif [[ $# -eq 3 && -d $3 && $1 == ep ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $eID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 #for known downloads directory and if loop enabled, do
 elif [[ $# -eq 4 && -d $4 && $1 == ap && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 4 && -d $4 && $1 == bp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 4 && -d $4 && $1 == cp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 4 && -d $4 && $1 == dp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $# -eq 4 && -d $4 && $1 == vp && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $3 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p -l
+elif [[ $# -eq 4 && -d $4 && $1 == ep && $2 == -l ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $eID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 #play later
 elif [[ $# -eq 1 && $1 == -p ]];then 
-    if [[ -f ${LOG_FILE} ]];then #check if file exists
-        bash ${LOG_FILE} 
+    if [[ -f ${HIST_FILE} ]];then #check if file exists
+        fnd `cat ${HIST_FILE}` 
     else 
         echo -e "\e[031mYou haven't downloaded any file!"
         exit 1
     fi
 
 elif [[ $1 == -s* ]];then #stream 
-    if [[ $# -eq 2 ]];then
-        if command -v mpv.exe &>/dev/null ;then
+    if command -v mpv.exe &>/dev/null ;then
+        format_selector(){
         case $1 in
-            -sa) opt=$aID;;-sb) opt=$bID;;-sc) opt=$cID;;-sd) opt=$dID;;-sv) opt=$vID;;
+                -sa) opt=$aID ;;-sb) opt=$bID ;;-sc) opt=$cID ;;-sd) opt=$dID ;;-sv) opt=$vID ;;-se) opt=$eID
+                ;;
+                    
                 *) 
                 formats="
         \e[035ma\e[0m: 1080p Video
@@ -359,26 +426,34 @@ elif [[ $1 == -s* ]];then #stream
                 echo -en "select format\n$formats \n -: "
                 read opt
                 case $opt in
-                    a) opt=$aID;;b) opt=$bID;;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;
+                    a) opt=$aID;;b) opt=$bID;;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;e) opt=$eID;;
                     *) echo "please select the given formats!";exit 1;;
                 esac
                 ;;
             esac
-            if [[ $(command -v mpv-console-launcher.exe) ]];then
-                mpv-console-launcher.exe -v --ytdl-format=$opt --fs "$2"
-                echo "mpv-console-launcher.exe -v --ytdl-format=$opt --fs $2 2>/dev/null">${LOG_FILE}
-            else
-                mpv.exe --ytdl-format=$opt --fs --player-operation-mode=pseudo-gui "$2"
-                echo "mpv.exe --ytdl-format=$opt --fs --player-operation-mode=pseudo-gui $2 2>/dev/null">${LOG_FILE}
-            fi
+        }
+        cd $dlc 
+        if [[ $# -eq 2 ]];then
+            format_selector $1
+            fnd_p -s -v --player-operation-mode=pseudo-gui --ytdl-format=$opt --ytdl-raw-options="no-simulate=,skip-download=,write-auto-sub=,sub-langs=en=,output=./%(title)s-%(id)s.%(ext)s"= --fs "$2"
+        elif [[ $# -eq 3 && $2 == -l ]];then
+            format_selector $1
+            shift
+            for times in {1..4};do
+                fnd_p -s -v --player-operation-mode=pseudo-gui --ytdl-format=$opt --ytdl-raw-options="no-simulate=,skip-download=,write-auto-sub=,sub-langs=en=,output=./%(title)s-%(id)s.%(ext)s"= --fs "$2">&2
+            done
+        elif [[ $# > 3 && $2 == -l ]];then
+            echo -e "\e[031mloop option is available for one file only!\e[0m"
+            exit $?
         else
-            echo -e "\e[031mYou need to download mpv to stream file!\e[0m"
+            shift
+            for urls in "$@";do
+                $0 -s $urls >&2
+            done 
         fi
     else
-        shift
-        for urls in "$@";do
-            $0 -s $urls >&2
-        done 
+        echo -e "\e[031mYou need to download mpv to stream file!\e[0m"
+        exit $?
     fi
 
 else 
