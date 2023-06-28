@@ -124,10 +124,11 @@ fnd_p() {
    
     if [[ $1 == -l ]];then
         shift;p=pl
-    elif [[ $1 == -s ]];then
+    elif [[ $1 == -s* ]];then
         shift
         echo "s $@">${TEMP_FILE}
         fnd `cat ${TEMP_FILE}` 
+        rm ${TEMP_FILE} >/dev/null 2>&1
         return
     else
         p=p
@@ -161,31 +162,31 @@ fnd_p() {
 }
 aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
 cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg/fallback
-
+add_info="$add_info --sub-langs=en-orig,en"
 if [[ $opt == a ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 --embed-subs $1
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 $add_info $1
 elif [[ $opt == b ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 --embed-subs $1
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID --merge-output-format mp4 $add_info $1
 elif [[ $opt == c ]]; then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 --embed-subs $1
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID --merge-output-format mp4 $add_info $1
 elif [[ $opt == d ]]; then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 $1
 elif [[ $opt == v ]];then
-    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 --embed-subs $1
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 $add_info $1
 
 elif [[ $opt == ap ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $opt == bp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $opt == cp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $opt == dp ]];then
@@ -195,22 +196,22 @@ elif [[ $opt == dp ]];then
 
 elif [[ $opt == vp ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 elif [[ $opt == ap-l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $aID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $aID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $opt == bp-l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $bID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $bID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $opt == cp-l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $cID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $cID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $opt == dp-l ]];then
@@ -220,7 +221,7 @@ elif [[ $opt == dp-l ]];then
 
 elif [[ $opt == vp-l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
-    yt-dlp -f $vID --merge-output-format mp4 --embed-subs $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    yt-dlp -f $vID --merge-output-format mp4 $add_info $1 > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
 
 elif [[ $opt == -s* ]];then #stream 
