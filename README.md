@@ -70,7 +70,7 @@ clone with:
     
 ANDROID
 
-    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && cp -vrf cyt-dl/Android/termux-url-opener ~/bin
+    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && mkdir ~/bin;cp -vrf cyt-dl/Android/termux-url-opener ~/bin
     
     termux-setup-storage && chmod 755 ~/bin/termux-url-opener
     
