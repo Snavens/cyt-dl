@@ -158,10 +158,10 @@ tmp_scrpt=~/cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}'`.
 LOG_FILE=~/.cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`
 HIST_FILE=~/.cyt-hist.tmp
 fnd_p() {
-   
-    if [[ $1 == -l && $2 != s* ]];then
+  	echo $@ 
+    if [[ $1 == -l && $2 != s-l || $1 != s ]];then
         shift 2;p=pl
-    elif [[ $2 == s* ]];then
+    elif [[ $2 == s* || $1 == s ]];then
         if [[ $1 == -l ]];then
             shift
         fi
