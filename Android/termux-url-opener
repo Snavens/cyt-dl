@@ -28,7 +28,7 @@ if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
     usage
     exit 0
 fi
-
+# check if required commands are installed
 check_command(){
     if ! command -v $@ &>/dev/null ;then
         apt update && apt upgrade < <(yes)
@@ -41,15 +41,11 @@ check_command(){
         fi
     fi
     if ! command -v $@ &>/dev/null ;then
-        installed=no
-        return
+        echo -e "\e[091minstall failed!"
+        exit $?
     fi
 }
 check_command ffmpeg && check_command yt-dlp
-if [[ $installed == no ]];then
-    echo -e "\e[091minstall failed!"
-    exit $?
-fi
 
 if [[ ! -d /sdcard/YoutubeVideos ]];then
     mkdir /sdcard/YoutubeVideos
@@ -104,7 +100,7 @@ fnd() {
         p)
 		cd "$2"
         mpv_player() {
-            echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".json|.part">${tmp_scrpt}
+            echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".part">${tmp_scrpt}
             if [[ $(cat ${tmp_scrpt}) ]];then
                 echo -en "\e[033mPlaying:\e[094m"
                 list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}        
@@ -129,7 +125,7 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                 list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}        
                 echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                bash<<<$(echo "mpv -v --loop-file=3 --fs$list"|grep -v ".part")
+                bash<<<$(echo "mpv -v --loop-file=3 --fs$list")
                 #remove temp files
                 rm ${tmp_scrpt} >/dev/null 2>&1
             else
@@ -200,10 +196,6 @@ else
             LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
             if [[ ! -z $LOG ]];then
                 check_command mpv
-                if [[ $installed == no ]];then
-                    echo -e "\e[091minstall failed!"
-                    exit $?
-                fi
                 fnd $p "$dlc" "$LOG"
                 echo "$p "$dlc" "$LOG"">${HIST_FILE}
             else
@@ -248,12 +240,14 @@ else
         e)
         echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID $add_info "$1"
         ;;
+        
         # download and play
         dp|dp-l)
         echo -e "\e[032mSaving to $dlc\e[0m"
         yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$1" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
         check_loop $opt
         ;;
+
         ap-l|bp-l|cp-l|ep-l|vp-l)
         echo "not playing videos!"
         case $opt in
@@ -274,14 +268,10 @@ else
             ;;
         esac
         ;;
+
         s*)
         check_command mpv
-            if [[ $installed == no ]];then
-            echo -e "\e[091minstall failed!"
-            exit $?
-        fi
         check_loop $opt -v --ytdl-format=b/$dID "$1"
-
         ;;
 
         *)
