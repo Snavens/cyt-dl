@@ -171,7 +171,7 @@ else
 	check_input $opt
 	fnd_p() {
 
-        if [[ $1 == -l && $2 != s-l || $1 != s ]];then
+        if [[ $1 == -l && $2 != s-l && $1 != s ]];then
             shift 2;p=pl
         elif [[ $2 == s* || $1 == s ]];then
             if [[ $1 == -l ]];then
