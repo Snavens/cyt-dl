@@ -46,8 +46,8 @@ If you have python installed then install with pip install yt-dlp and skip downl
        
 Execute the commands (on your installed termux):
 
-    apt-get update ; apt-get upgrade \
-    apt install mpv ffmpeg python python-pip \
+    apt-get update ; apt-get upgrade ; \
+    apt install mpv ffmpeg python python-pip ; \
     pip install yt-dlp
     
   
@@ -56,22 +56,23 @@ Execute the commands (on your installed termux):
 
 LINUX
 
-    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt-dl/GNU-linux/cyt-dl /usr/local/bin
-    
+    git clone https://github.com/Snavens/cyt-dl.git && \
+    cp -rvf cyt-dl/GNU-linux/cyt-dl /usr/local/bin && \
     chmod 777 /usr/local/bin/cyt-dl
 
 CYGWIN
 
 clone with:
 
-    git clone https://github.com/Snavens/cyt-dl.git && cp -rvf cyt-dl/cygwin/cyt-dl /usr/local/bin
-    
+    git clone https://github.com/Snavens/cyt-dl.git && \
+    cp -rvf cyt-dl/cygwin/cyt-dl /usr/local/bin && \
     chmod 777 /usr/local/bin/cyt-dl
     
 ANDROID
 
-    git clone https://github.com/Snavens/cyt-dl.git && mkdir ~/bin && mkdir ~/bin;cp -vrf cyt-dl/Android/termux-url-opener ~/bin
-    
+    git clone https://github.com/Snavens/cyt-dl.git && \
+    mkdir ~/bin && mkdir ~/bin ; \
+    cp -vrf cyt-dl/Android/termux-url-opener ~/bin ; \
     termux-setup-storage && chmod 755 ~/bin/termux-url-opener
     
 go to app settings and give termux permission to appear on top and you are done now all you have to do is share videos directly to termux app 
@@ -85,7 +86,8 @@ General usage examples:
 
 stream (file)s
 
-    cyt-dl -s https://www.youtube.com/watch?v=SMT9Yzvw9w0 https://www.youtube.com/watch?v=XWynXenqp4c
+    cyt-dl -s https://www.youtube.com/watch?v=SMT9Yzvw9w0 \
+    https://www.youtube.com/watch?v=XWynXenqp4c
 
 download file as audio and store it in downloads folder
 
@@ -93,11 +95,12 @@ download file as audio and store it in downloads folder
 
 download as video and play then keep it in music folder (you can store in any directory you want)
 
-    cyt-dl ap https://www.youtube.com/watch?v=5hX-qHLIRe8 /cygdrive/c/Users/$(whoami)/Music
+    cyt-dl ap https://www.youtube.com/watch?v=5hX-qHLIRe8 ~/Music
 
 does the same as above and loop file.
 
-    cyt-dl dp -l https://www.youtube.com/watch?v=5hX-qHLIRe8 /cygdrive/c/Users/$(whoami)/Music
+    cyt-dl dp -l https://www.youtube.com/watch?v=5hX-qHLIRe8 \
+    /cygdrive/c/Users/$(whoami)/Music
 
 More help is readily available in the script itself, use --help as option.
 
