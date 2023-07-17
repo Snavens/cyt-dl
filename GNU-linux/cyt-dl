@@ -419,13 +419,14 @@ elif [[ $1 == -s* ]];then # stream file(s)
                 ;;
             esac
         }
-        if [[ $# -eq 2 ]];then
-            format_selector $1
-            fnd_p -s -v --ytdl-format=$opt --fs "$2"
-        elif [[ $2 == -l ]];then
+        if [[ $2 == -l ]];then
             format_selector $1
             shift 2
-            fnd_p -sl -v --ytdl-format=$opt --fs $@
+            fnd_p -sl -v --ytdl-format=$opt --fs "$@"
+        else
+            format_selector $1
+            shift
+            fnd_p -s -v --ytdl-format=$opt --fs "$@"
         fi
     else
         echo -e "\e[031mYou need to download mpv to stream file!\e[0m"
@@ -438,6 +439,6 @@ else
     Options:
         $formats
     \e[031m--> Also check to confirm if the \e[034mdestination\e[031m folder exists\e[0m"
-    rm $LOG_FILE
+    rm $LOG_FILE >/dev/null 2>&1
     exit 1
 fi
