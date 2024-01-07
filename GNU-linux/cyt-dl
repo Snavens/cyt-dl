@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 #   Copyright (c) 2023 falkensnavens
 #   All rights reserved.
+#   falkensnavens@gmail.com
 #
 # source -- https://github.com/Snavens/cyt-dl
 # 
@@ -11,6 +12,7 @@ formats="
     \e[035mc\e[0m: Downloads 720p Video
     \e[035md\e[0m: Downloads mp3 Audio
     \e[035me\e[0m: Downloads 2160p Video
+    \e[035mf\e[0m: Downloads 480p Video
     \e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
     --> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
     --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
@@ -18,21 +20,26 @@ formats="
     \e[096mWhen download and play option is selected:\e[0m
     --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
     --> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n"
-# print usage and help
-if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
-    echo "Usage: $(basename $0) {OPTION} <url> | <destination>"
+usage(){
+    echo "Usage: $(basename $0) {OPTIONS} <url> | <destination>"
     echo -e "Options:$formats
     Default directory is \e[033m"`echo ~/Downloads`"\e[0m folder, i.e if you omit destination folder"
+}
+# print usage and help
+if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
+    usage
     exit 0
 fi
 # check requirements
 check_command(){
-    if ! command -v $@ &>/dev/null ;then
-        echo -e "\e[091m$@ not found on system..quitting"
-        exit 1
-    fi
+    for pkg in $@;do
+        if ! command -v $pkg &>/dev/null ;then
+            echo -e "\e[091m$pkg not found on system..quitting"
+            exit $?
+        fi
+    done
 }
-check_command ffmpeg && check_command yt-dlp
+check_command ffmpeg yt-dlp
 # assign dlc to downloads folder
 if [[ ! -d ~/Downloads ]];then
     mkdir ~/Downloads
@@ -61,7 +68,7 @@ fnd() {
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv --player-operation-mode=pseudo-gui -v --loop-file=0 $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv -v --fs --loop-file=0 $list >/dev/null 2>&1 &")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         # remove temp file
@@ -92,7 +99,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv --player-operation-mode=pseudo-gui -v --loop-file=0 $list >/dev/null 2>&1 &")
+                        bash<<<$(echo "mpv -v --fs --loop-file=0 $list >/dev/null 2>&1 &")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         # remove temp file
@@ -118,7 +125,7 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --loop-file=3 --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &"|grep -v ".part")
+                        bash<<<$(echo "mpv -v --fs --loop-file=3 $list >/dev/null 2>&1 &"|grep -v ".part")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         # remove temp file
@@ -149,7 +156,7 @@ $(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
                     if [[ $(cat ${tmp_scrpt}) ]];then
                         echo -en "\e[033mPlaying:\e[094m"
                         list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --loop-file=3 --player-operation-mode=pseudo-gui $list >/dev/null 2>&1 &"|grep -v ".part")
+                        bash<<<$(echo "mpv -v --fs --loop-file=3 $list >/dev/null 2>&1 &"|grep -v ".part")
                         echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
                         # remove temp file
@@ -165,21 +172,33 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
             echo -e "\e[031mThe source folder doesn't exist!"
         fi
 		;;
-        s*)
-        case $1 in
-            s)
-            shift
-            mpv --player-operation-mode=pseudo-gui --loop-file=0 $@
-            ;;
-            sl)
-            shift
-            mpv --player-operation-mode=pseudo-gui --loop-file=3 $@
-            ;;
-        esac
+        s)
+        shift
+        for links in $@;do 
+            mpv --loop-file=0 --fs -v -v --player-operation-mode=cplayer --ytdl-format=$opt --audio-device=pulse $links
+        done
+        if [[ ! $(ps -ef |grep 'tail -f /tmp/.cyt-dl.log'|grep -v grep) ]];then
+		if [ -f /tmp/.$(basename $0).log ];then
+	    		tail -f /tmp/.$(basename $0).log
+		fi
+		
+        fi
+        ;;
+        sl)
+        shift
+        for links in $@;do 
+            mpv --player-operation-mode=pseudo-gui --loop-file=3 --fs -v -v --ytdl-format=$opt --audio-device=pulse $links
+        done
+        if [[ ! $(ps -ef |grep 'tail -f /tmp/.cyt-dl.log'|grep -v grep) ]];then
+		if [ -f /tmp/.$(basename $0).log ];then
+			tail -f /tmp/.$(basename $0).log
+		fi
+        fi
         ;;
 	esac
 
 }
+# assign variables for tmp files
 tmp_scrpt=/tmp/cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}'`.sh
 LOG_FILE=/tmp/.cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`
 HIST_FILE=~/.cyt-hist.tmp
@@ -205,7 +224,7 @@ fnd_p() {
         p=p
     fi
 
-    if [[ $(grep "+" <<< $(grep -oP '(?<=format\(s\):\s).*(?=)' ${LOG_FILE})) ]];then
+    if [[ `grep "+" <<< $(grep -oP '(?<=format\(s\):\s).*(?=)' ${LOG_FILE})` ]];then
         formats=2
     else
         formats=1
@@ -233,9 +252,9 @@ fnd_p() {
     rm ${LOG_FILE} >/dev/null 2>&1
 
 }
-aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
+aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140/251/250/b/mpeg"
 cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg/fallback
-eID="337+140"/"315+251"/"337+251"/"315+140"
+eID="337+140"/"315+251"/"337+251"/"315+140" ; fID="397+250"/"135+249"/"244+139" 
 add_info="--embed-subs --sub-langs=en-orig,en"
 
 # default storage as ~/Downloads 
@@ -251,6 +270,8 @@ elif [[ $# -eq 2 && -d $dlc && $1 == v ]];then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == e ]];then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID --merge-output-format mp4 $add_info "$2"
+elif [[ $# -eq 2 && -d $dlc && $1 == f ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $fID --merge-output-format mp4 $add_info "$2"
 
 # for known folders then
 elif [[ $# -eq 3 && -d $dlc && $1 == a ]]; then
@@ -265,6 +286,8 @@ elif [[ $# -eq 3 && -d $dlc && $1 == v ]];then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 3 && -d $dlc && $1 == e ]];then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID --merge-output-format mp4 $add_info "$2"
+elif [[ $# -eq 3 && -d $dlc && $1 == f ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $fID --merge-output-format mp4 $add_info "$2"
 
 # default storage as ~/Downloads and play selected
 elif [[ $# -eq 2 && -d $dlc && $1 == ap ]];then
@@ -294,6 +317,10 @@ elif [[ $# -eq 2 && -d $dlc && $1 == vp ]];then
 elif [[ $# -eq 2 && -d $dlc && $1 == ep ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
     yt-dlp -f $eID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p
+elif [[ $# -eq 2 && -d $dlc && $1 == fp ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $fID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 # default storage as ~/Downloads and if loop enabled then
@@ -325,6 +352,10 @@ elif [[ $# -eq 3 && -d $dlc && $1 == ep && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
     yt-dlp -f $eID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
+elif [[ $# -eq 3 && -d $dlc && $1 == fp && $2 == -l ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $fID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p -l
 
 # for known downloads directory and play selected then
 elif [[ $# -eq 3 && -d $3 && $1 == ap ]];then
@@ -354,6 +385,10 @@ elif [[ $# -eq 3 && -d $3 && $1 == vp ]];then
 elif [[ $# -eq 3 && -d $3 && $1 == ep ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
     yt-dlp -f $eID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p
+elif [[ $# -eq 3 && -d $3 && $1 == fp ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $fID --merge-output-format mp4 $add_info "$2" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p
 
 # for known downloads directory and if loop enabled then
@@ -385,6 +420,10 @@ elif [[ $# -eq 4 && -d $4 && $1 == ep && $2 == -l ]];then
     echo -e "\e[032mSaving to $dlc\e[0m"
     yt-dlp -f $eID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
     fnd_p -l
+elif [[ $# -eq 4 && -d $4 && $1 == fp && $2 == -l ]];then
+    echo -e "\e[032mSaving to $dlc\e[0m"
+    yt-dlp -f $fID --merge-output-format mp4 $add_info "$3" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+    fnd_p -l
 
 # play previous file saved
 elif [[ $# -eq 1 && $1 == -p ]];then 
@@ -399,7 +438,7 @@ elif [[ $1 == -s* ]];then # stream file(s)
     if command -v mpv &>/dev/null ;then
         format_selector(){
             case $1 in
-                -sa) opt=$aID ;;-sb) opt=$bID ;;-sc) opt=$cID ;;-sd) opt=$dID ;;-sv) opt=$vID ;;-se) opt=$eID
+                -sa) opt=$aID ;;-sb) opt=$bID ;;-sc) opt=$cID ;;-sd) opt=$dID ;;-sv) opt=$vID ;;-se) opt=$eID ;;-sf) opt=$fID
                 ;;
                     
                 *) 
@@ -409,11 +448,12 @@ elif [[ $1 == -s* ]];then # stream file(s)
             \e[035mc\e[0m: 720p Video
             \e[035md\e[0m: mp3 Audio
             \e[035me\e[0m: 2160p Video
+            \e[035mf\e[0m: 480p Video
             \e[035mv\e[0m: if all of the above formats fail or non-youtube videos\n"
                 echo -en "select format\n$formats \n -: "
                 read opt
                 case $opt in
-                    a) opt=$aID;;b) opt=$bID;;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;e) opt=$eID;;
+                    a) opt="$aID --fs";;b) opt="$bID --fs";;c) opt=$cID;;d) opt=$dID;;v) opt=$vID;;e) opt="$eID --fs";; f) opt=$fID;;
                     *) echo "please select the given formats!";exit $?;;
                 esac
                 ;;
@@ -422,11 +462,11 @@ elif [[ $1 == -s* ]];then # stream file(s)
         if [[ $2 == -l ]];then
             format_selector $1
             shift 2
-            fnd_p -sl -v --ytdl-format=$opt --fs "$@"
+            fnd_p -sl "$@"
         else
             format_selector $1
             shift
-            fnd_p -s -v --ytdl-format=$opt --fs "$@"
+            fnd_p -s "$@"
         fi
     else
         echo -e "\e[031mYou need to download mpv to stream file!\e[0m"
