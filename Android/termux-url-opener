@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 #
 #   Copyright (c) 2023 falkensnavens
 #   All rights reserved.
@@ -11,43 +11,48 @@ formats="
 \e[035mc\e[0m: Downloads 720p Video
 \e[035md\e[0m: Downloads mp3 Audio
 \e[035me\e[0m: Downloads 2160p Video
+\e[035mf\e[0m: Downloads 480p Video
 \e[035mv\e[0m: Downloads video where all of the above formats fail or non-youtube videos
 --> If you wish to download and play add \e[035mp\e[0m(for example \e[035map\e[0m) to your \e[034moptions\e[0m.
 --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
---> Use \e[034moption\e[0m \e[035ms\e[0m(format) to stream files.
+--> Use \e[034moption\e[0m \e[035m-s\e[0m(format) to stream files.
 \e[096mWhen download and play option is selected:\e[0m
 --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
---> Play last downloaded with \e[035mp\e[0m as \e[034moption\e[0m.\n"
-usage(){
-    echo "Usage: $(basename $0) {OPTION} <url> | <destination>"
+--> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n
+--> To download data using url, use \e[035m-d\e[0m as option"
+usage(){    
+    echo "Usage: $(basename $0) {OPTIONS} <url>"
     echo -e "Options:$formats
 Default videos directory is /sdcard/YoutubeVideos and audio files stored in /sdcard/YoutubeAudio"
 }
-#   print usage and help
+# print usage and help
 if [[ $# -eq 0 || $1 == -help || $1 == --help || $1 == -h || $1 == --h ]] ; then
     usage
     exit 0
 fi
-# check if required commands are installed
+# check requirements
 check_command(){
-    if ! command -v $@ &>/dev/null ;then
-        apt update && apt upgrade < <(yes)
-        echo -e "\e[091m$@ not found on system..\e[092minstalling\e[0m"
-        if [ $@ == yt-dlp ];then
-            apt -y install python-pip
-            pip install yt-dlp 
-        else
-            apt -y install $@
+    for pkg in $@;do
+        if ! command -v $pkg &>/dev/null ;then
+            apt update && apt upgrade < <(yes)
+            echo -e "\e[091m$pkg not found on system..\e[092minstalling\e[0m"
+            if [ $pkg == yt-dlp ];then
+                apt -y install python-pip
+                pip install yt-dlp 
+            else
+                apt -y install $pkg
+            fi
         fi
-    fi
-    if ! command -v $@ &>/dev/null ;then
-        echo -e "\e[091minstall failed!"
-        exit $?
-    fi
+        if ! command -v $pkg &>/dev/null ;then
+            echo -e "\e[091minstall failed!"
+            exit $?
+        fi
+    done
 }
-check_command ffmpeg && check_command yt-dlp
-
+check_command ffmpeg yt-dlp
+# assign dlc to downloads folder
 if [[ ! -d /sdcard/YoutubeVideos ]];then
+    termux-setup-storage < <(yes)>&2
     mkdir /sdcard/YoutubeVideos
 fi
 
@@ -57,43 +62,49 @@ fi
 
 check_input(){
     case $@ in
-        a* | b* | c* | v* | e*)
-        cd /sdcard/YoutubeVideos
-        dlc=/sdcard/YoutubeVideos
-        ;;
-        d*)
-        cd /sdcard/YoutubeAudio
-        dlc=/sdcard/YoutubeAudio
-        ;;
-        s*)
-        echo "streaming..."
-        ;;
-        *)
-        echo -en "pleeaase give the right input -: "
-        read opt
-        case $opt in
-            a* | b* | c* | v*| e*)
+        a* | b* | c* | v* | e* | f*)
             cd /sdcard/YoutubeVideos
             dlc=/sdcard/YoutubeVideos
-            ;;
-            d*)
+        ;;
+        d*)
             cd /sdcard/YoutubeAudio
             dlc=/sdcard/YoutubeAudio
-            ;;
-            s*)
+        ;;
+        -s*)
             echo "streaming..."
-            ;;
-            *)
-            echo -e "you did not give the right input, quitting...\n"
-            sleep .5
-            exit $?
+        ;;
+        -d)
+            echo "downloading.."
+        ;;
+        *)
+            echo -en "pleeaase give the right input -: "
+            read opt
+            case $opt in
+                a* | b* | c* | v*| e* | f*)
+                    cd /sdcard/YoutubeVideos
+                    dlc=/sdcard/YoutubeVideos
+                ;;
+                d*)
+                    cd /sdcard/YoutubeAudio
+                    dlc=/sdcard/YoutubeAudio
+                ;;
+                -s*)
+                    echo "streaming..."
+                ;;
+                -d)
+                    echo "downloading.."
+                ;;
+                *)
+                    echo -e "you did not give the right input, quitting...\n"
+                    sleep .5
+                    exit $?
             ;;
         esac
         ;;
     esac
 }
 
-# start of main code
+# play function
 fnd() {
 
     case $1 in
@@ -134,18 +145,17 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
         }
         mpv_player "$@"
 		;;
-        s*)
-        case $1 in
-            s-l)
-            shift
+        -s*)
+        case $2 in
+            -l)
+            shift 2
             mpv --loop-file=3 $@
             ;;
-            s)
+            *)
             shift
             mpv $@
             ;;
             *)
-            echo $@
             echo "please read help menu!"
             ;;
         esac
@@ -153,131 +163,135 @@ $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
 	esac
 
 }
-tmp_scrpt=~/cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}'`.sh
-LOG_FILE=~/.cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`
-HIST_FILE=~/.cyt-hist.tmp
-
-if [ $1 == p ];then #play saved file if in history
-	if [ -f ${HIST_FILE} ];then
-		fnd `cat ${HIST_FILE}`
-	else
-		echo -e "\e[031m You haven't downloaded any file!"
-		exit 1
-	fi
-else
-	echo -en "$formats\n
-    	please give your input -: "
-	read opt
-	check_input $opt
-	fnd_p() {
-
-        if [[ $1 == -l && $2 != s-l && $1 != s ]];then
-            shift 2;p=pl
-        elif [[ $2 == s* || $1 == s ]];then
-            if [[ $1 == -l ]];then
-                shift
-            fi
-            fnd "$@"
-            echo "$@">${HIST_FILE}
-            return
-        else
-            shift
-            p=p
-        fi
-
-        if [[ $(grep "+" <<< $(grep -oP '(?<=format\(s\):\s).*(?=)' ${LOG_FILE})) ]];then
-            formats=2
-        else
-            formats=1
-        fi
-
-        if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) == $formats \
-            || $(grep "download]\s100%" ${LOG_FILE}|wc -l) > $formats ]];then
-            LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
-            if [[ ! -z $LOG ]];then
-                check_command mpv
-                fnd $p "$dlc" "$LOG"
-                echo "$p "$dlc" "$LOG"">${HIST_FILE}
-            else
-                return
-            fi
-
-        else
-            echo -e "Download failed!"
-            return
-        fi
-        rm ${LOG_FILE} >/dev/null 2>&1
-
-    }
-    aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
-    cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg/fallback
-    eID="337+140"/"315+251"/"337+251"/"315+140"
-    add_info="--embed-subs --sub-langs=en-orig,en --merge-output-format mp4"
-    check_loop(){
-        if [[ $@ =~ -l ]];then
-            fnd_p -l $@
-        else
-            fnd_p $@
-        fi
-    }
-    # download and save to $dlc
-    case $opt in
-        a)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID $add_info "$1"
-        ;;
-        b)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID $add_info "$1"
-        ;;
-        c)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID $add_info "$1"
-        ;;
-        d)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$1"
-        ;;
-        v)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID $add_info "$1"
-        ;;
-        e)
-        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID $add_info "$1"
-        ;;
-        
-        # download and play
-        dp|dp-l)
-        echo -e "\e[032mSaving to $dlc\e[0m"
-        yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$1" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
-        check_loop $opt
-        ;;
-
-        ap-l|bp-l|cp-l|ep-l|vp-l)
-        echo "not playing videos!"
-        case $opt in
-            ap-l|ap)
-            echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID $add_info "$1"
-            ;;
-            bp-l|bp)
-            echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID $add_info "$1"
-            ;;
-            cp-l|cp)
-            echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID $add_info "$1"
-            ;;
-            vp-l|vp)
-            echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID $add_info "$1"
-            ;;
-            ep-l|ep)
-            echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID $add_info "$1"
-            ;;
-        esac
-        ;;
-
-        s*)
-        check_command mpv
-        check_loop $opt -v --ytdl-format=b/$dID "$1"
-        ;;
-
-        *)
-        usage
+# assign variables for tmp files
+tmp_scrpt=~/.cache/tuo-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}'`.sh
+LOG_FILE=~/.cache/.tuo-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`.log
+HIST_FILE=~/.cache/.tuo-hist.tmp
+if [[ $1 == -p ]];then #play saved file if in history
+    if [ -f ${HIST_FILE} ];then
+        fnd `cat ${HIST_FILE}`
+    else
+        echo -e "\e[031m You haven't downloaded any file!"
         exit $?
-        ;;
+    fi
+elif [[ $1 == -d ]];then
+    if [[ ! -d /sdcard/Download ]];then
+        mkdir /sdcard/Download
+    fi
+    cd /sdcard/Download
+    wget "$1"
+else
+    MAIN(){
+        [[ -z $opt ]] && {
+            echo -en "$formats\n
+                please give your input -: "
+            read opt
+        }
+        check_input $opt
+        fnd_p() {
+            if [[ $2 == -l &&! $1 == -s ]];then
+                p=pl
+            elif [[ $1 == -s ]];then
+                fnd "$@";echo "$@">${HIST_FILE};exit $?
+            elif [[ $1 == dp ]];then
+                p=p
+            else
+                echo "please read the instructions on how to do whatever you were trying to..";exit $?
+            fi
 
-    esac
+            if [[ `grep "+" <<<$(grep -oP '(?<=format\(s\):\s).*(?=)' ${LOG_FILE})` ]];then
+                formats=2;else formats=1
+            fi
+
+            if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) == $formats \
+                || $(grep "download]\s100%" ${LOG_FILE}|wc -l) > $formats ]];then
+                LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
+                if [[ ! -z $LOG ]];then
+                    check_command mpv
+                    fnd $p "$dlc" "$LOG" && echo "$p "$dlc" "$LOG"">${HIST_FILE}
+                else
+                    echo -e "Download failed!";exit $?
+                fi
+
+            else
+                echo -e "Download failed!";exit $?
+            fi
+            rm ${LOG_FILE} >/dev/null 2>&1
+
+        }
+        aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140"/"251"/"250"
+        cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/"577367437709020v+831640624815341a"/hls-2176/http/mpeg/fallback
+        eID="337+140"/"315+251"/"337+251"/"315+140" ; fID="397+250"/"135+249"/"244+139"
+        add_info="--embed-subs --sub-langs=en-orig,en --merge-output-format mp4"
+        # download and save to $dlc
+        case $opt in
+            a)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID $add_info "$1"
+            ;;
+            b)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID $add_info "$1"
+            ;;
+            c)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID $add_info "$1"
+            ;;
+            d)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$1"
+            ;;
+            v)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID $add_info "$1"
+            ;;
+            e)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID $add_info "$1"
+            ;;
+            f)
+                echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $fID $add_info "$1"
+            ;;
+            # download and play
+            dp*)
+                echo -e "\e[032mSaving to $dlc\e[0m"
+                yt-dlp -f $dID --extract-audio --audio-format mp3 --audio-quality 1 "$1" > >(tee ${LOG_FILE}) 2> >(tee ${LOG_FILE} 2>&1)
+                fnd_p $opt
+            ;;
+            ap*|bp*|cp*|ep*|vp*|fp*)
+                echo "not playing videos!"
+                case $opt in
+                    ap*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID $add_info "$1"
+                    ;;
+                    bp*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $bID $add_info "$1"
+                    ;;
+                    cp*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $cID $add_info "$1"
+                    ;;
+                    vp*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $vID $add_info "$1"
+                    ;;
+                    ep*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $eID $add_info "$1"
+                    ;;
+                    fp*)
+                        echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $fID $add_info "$1"
+                    ;;
+                esac
+            ;;
+            -s*)
+                fnd_p $opt -v --ytdl-format=b/$dID "$1"
+
+            ;;
+
+            *)
+                echo -e "you did not give the right input, quitting...\n"
+                sleep .5
+                exit $?
+            ;;
+
+        esac
+    }
+    if [ $# -eq 1 ];then
+        MAIN
+    else
+        opt=`awk '{for (x=1;x<NF;x++) print $x}' <<<$@|paste -s -d' '`
+        MAIN `awk '{print $NF}'<<<$@`
+    fi
 fi
