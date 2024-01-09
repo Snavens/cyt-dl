@@ -289,7 +289,7 @@ else
         esac
     }
     if [ $# -eq 1 ];then
-        MAIN
+        MAIN $@
     else
         opt=`awk '{for (x=1;x<NF;x++) print $x}' <<<$@|paste -s -d' '`
         MAIN `awk '{print $NF}'<<<$@`
