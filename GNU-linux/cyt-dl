@@ -5,7 +5,7 @@
 #   falkensnavens@gmail.com
 #
 # source -- https://github.com/Snavens/cyt-dl
-# 
+#
 formats="
     \e[035ma\e[0m: Downloads 1080p Video
     \e[035mb\e[0m: Downloads 1440p Video
@@ -18,7 +18,7 @@ formats="
     --> If for any reason format fails try using \e[035mv\e[0m as \e[034moption\e[0m.
     --> Use \e[034moption\e[0m \e[035m-s\e[0m(format) to stream files.
     \e[096mWhen download and play option is selected:\e[0m
-    --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m. 
+    --> Loop play \e[035m-l\e[0m just after \e[034moption\e[0m.
     --> Play last downloaded with \e[035m-p\e[0m as \e[034moption\e[0m.\n"
 usage(){
     echo "Usage: $(basename $0) {OPTIONS} <url> | <destination>"
@@ -60,142 +60,114 @@ fnd() {
 
     case $1 in
         p)
-		if [[ $# -eq 3 && -d "$2" ]];then
+                if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
-                mpv_player() {
-                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".part">${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mPlaying:\e[094m"
-                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --fs --loop-file=0 $list >/dev/null 2>&1 &")
-                        echo -e "
+                        mpv_player() {
+                                echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".part">${tmp_scrpt}
+                                if [[ $(cat ${tmp_scrpt}) ]];then
+                                        echo -en "\e[033mPlaying:\e[094m"
+                                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
+                                        bash<<<$(echo "mpv --player-operation-mode=pseudo-gui -v --fs --loop-file=0 $list >/dev/null 2>&1 &")
+                                        echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
+                                        # remove temp file
+                                        rm ${tmp_scrpt} >/dev/null 2>&1
+                                else
+                                        echo -e "\e[031mno files found!"
+                                fi
+                        }
+                        vlc_player() {
+                                echo "$(find -iname "*$3*" -exec echo "vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".part">${tmp_scrpt}
+                                if [[ $(cat ${tmp_scrpt}) ]];then
+                                        echo -en "\e[033mAdding to playlist:\e[094m"
+                                        bash ${tmp_scrpt}
+                                        echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
+                                        # remove temp file
+                                        rm ${tmp_scrpt} >/dev/null 2>&1
+                                else
+                                        echo -e "\e[031mno files found!"
+                                fi
+                        }
+            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
                 mpv_player "$@"
             elif [[ $(command -v vlc) ]];then
-                vlc_player() {
-                    echo "$(find -iname "*$3*" -exec echo "vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".part">${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mAdding to playlist:\e[094m"
-                        bash ${tmp_scrpt}
-                        echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
                 vlc_player "$@"
             else
-                mpv_player() {
-                    echo "$(find -iname "*$3*" -exec echo \"{}\" \;)"|grep -v ".part">${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mPlaying:\e[094m"
-                        list='';while IFS= read li;do list="$list $li";done <${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --fs --loop-file=0 $list >/dev/null 2>&1 &")
-                        echo -e "
-$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
                 mpv_player "$@"
             fi
-            
+
         elif [[ $# -eq 3 && ! -d "$2" ]];then
             echo -e "\e[031mThe source folder doesn't exist!"
         fi
-		;;
+                ;;
 
-		pl)
-		if [[ $# -eq 3 && -d "$2" ]];then
+                pl)
+                if [[ $# -eq 3 && -d "$2" ]];then
             cd "$2"
-            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
-                mpv_player() {
-                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".part" >${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mPlaying:\e[094m"
-                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --fs --loop-file=3 $list >/dev/null 2>&1 &"|grep -v ".part")
-                        echo -e "
+                        mpv_player() {
+                                find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".part" >${tmp_scrpt}
+                                if [[ $(cat ${tmp_scrpt}) ]];then
+                                        echo -en "\e[033mPlaying:\e[094m"
+                                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
+                                        bash<<<$(echo "mpv --player-operation-mode=pseudo-gui -v --fs --loop-file=3 $list >/dev/null 2>&1 &"|grep -v ".part")
+                                        echo -e "
 $(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
+                                        # remove temp file
+                                        rm ${tmp_scrpt} >/dev/null 2>&1
+                                else
+                                        echo -e "\e[031mno files found!"
+                                fi
+                        }
+                        vlc_player() {
+                                echo "$(find -iname "*$3*" -exec echo "vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".part">${tmp_scrpt}
+                                if [[ $(cat ${tmp_scrpt}) ]];then
+                                        echo -en "\e[033mAdding to playlist:\e[094m"
+                                        bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done)
+                                        echo -e "
+$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
+                                        # remove temp file
+                                        rm ${tmp_scrpt} >/dev/null 2>&1
+                                else
+                                        echo -e "\e[031mno files found!"
+                                fi
+                        }
+            if [[ $(command -v mpv) && $(ps -ef|grep mpv|wc -l) < 2 ]];then
                 mpv_player "$@"
             elif [[ $(command -v vlc) ]];then
-                vlc_player() {
-                    echo "$(find -iname "*$3*" -exec echo "vlc -q --fullscreen --one-instance --playlist-enqueue --play-and-exit \"{}\" >/dev/null 2>&1 &" \;)"|grep -v ".part">${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mAdding to playlist:\e[094m"
-                        bash<<<$(for i in {1..4};do echo "`cat ${tmp_scrpt}`";done) 
-                        echo -e "
-$(find -iname "*$3*" -exec echo \'{}\' \;|grep -v ".part"|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
-                vlc_player "$@"  
+                vlc_player "$@"
             else
-                mpv_player() {
-                    find -iname "*$3*" -exec echo "\"{}\"" \;|grep -v ".part" >${tmp_scrpt}
-                    if [[ $(cat ${tmp_scrpt}) ]];then
-                        echo -en "\e[033mPlaying:\e[094m"
-                        list="";while IFS= read -r li;do list="$list $li";done<${tmp_scrpt}
-                        bash<<<$(echo "mpv -v --fs --loop-file=3 $list >/dev/null 2>&1 &"|grep -v ".part")
-                        echo -e "
-$(cat ${tmp_scrpt}|nl)\e[032m";sleep 1
-                        # remove temp file
-                        rm ${tmp_scrpt} >/dev/null 2>&1
-                    else
-                        echo -e "\e[031mno files found!"
-                    fi
-                }
                 mpv_player "$@"
             fi
-            
+
         elif [[ $# -eq 3 && ! -d "$2" ]];then
             echo -e "\e[031mThe source folder doesn't exist!"
         fi
-		;;
+                ;;
         s)
         shift
-        for links in $@;do 
-            mpv --loop-file=0 --fs -v -v --player-operation-mode=cplayer --ytdl-format=$opt --audio-device=pulse $links
+        for links in $@;do
+            mpv --loop-file=0 --fs -v -v --ytdl-format=$opt $links
         done
         if [[ ! $(ps -ef |grep 'tail -f /tmp/.cyt-dl.log'|grep -v grep) ]];then
-		if [ -f /tmp/.$(basename $0).log ];then
-	    		tail -f /tmp/.$(basename $0).log
-		fi
-		
+                if [ -f /tmp/.$(basename $0).log ];then
+                        tail -f /tmp/.$(basename $0).log
+                fi
+
         fi
         ;;
         sl)
         shift
-        for links in $@;do 
+        for links in $@;do
             mpv --player-operation-mode=pseudo-gui --loop-file=3 --fs -v -v --ytdl-format=$opt --audio-device=pulse $links
         done
         if [[ ! $(ps -ef |grep 'tail -f /tmp/.cyt-dl.log'|grep -v grep) ]];then
-		if [ -f /tmp/.$(basename $0).log ];then
-			tail -f /tmp/.$(basename $0).log
-		fi
+                if [ -f /tmp/.$(basename $0).log ];then
+                        tail -f /tmp/.$(basename $0).log
+                fi
         fi
         ;;
-	esac
+        esac
 
 }
 # assign variables for tmp files
@@ -203,7 +175,7 @@ tmp_scrpt=/tmp/cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 10|awk '{print $1}
 LOG_FILE=/tmp/.cyt-`cat /dev/urandom | tr -cd 'a-z' | head -c 4|awk '{print $1}'`
 HIST_FILE=~/.cyt-hist.tmp
 fnd_p() {
-   
+
     if [[ $1 == -l ]];then
         shift;p=pl
     elif [[ $1 == -s* ]];then
@@ -217,7 +189,7 @@ fnd_p() {
             echo "sl $@">${HIST_FILE}
             ;;
         esac
-        fnd `cat ${HIST_FILE}` 
+        fnd `cat ${HIST_FILE}`
         echo `cat ${HIST_FILE}`>${HIST_FILE}
         return
     else
@@ -233,7 +205,7 @@ fnd_p() {
     if [[ $(grep downloaded ${LOG_FILE}) || $(grep "download]\s100%" ${LOG_FILE}|wc -l) == $formats \
         || $(grep "download]\s100%" ${LOG_FILE}|wc -l) > $formats ]];then
         LOG=`tac ${LOG_FILE}|grep -m1 -oP '(?<=]\s).*?(?=:\sDownloading)'`
-        if [[ ! -z $LOG ]];then 
+        if [[ ! -z $LOG ]];then
             if command -v mpv &>/dev/null ;then
                 fnd $p "$dlc" "$LOG"
             else
@@ -244,7 +216,7 @@ fnd_p() {
         else
             return
         fi
-        
+
     else
         echo -e "Download failed!"
         return
@@ -254,10 +226,10 @@ fnd_p() {
 }
 aID="248+251"/"137+251"/"399+140"/"303+140"/"299+251"/"96"; bID="400+140"/"271+251" ; dID="140/251/250/b/mpeg"
 cID="247+140"/"22+251"/"136+140"/"398+251" ; vID=b/"299+250"/"303+251"/"301"/"243+140"/"136+250"/hls-2176/http/mpeg/fallback
-eID="337+140"/"315+251"/"337+251"/"315+140" ; fID="397+250"/"135+249"/"244+139" 
+eID="337+140"/"315+251"/"337+251"/"315+140" ; fID="397+250"/"135+249"/"244+139"
 add_info="--embed-subs --sub-langs=en-orig,en"
 
-# default storage as ~/Downloads 
+# default storage as ~/Downloads
 if [[ $# -eq 2 && -d $dlc && $1 == a ]]; then
     echo -e "\e[032mSaving to $dlc\e[0m";yt-dlp -f $aID --merge-output-format mp4 $add_info "$2"
 elif [[ $# -eq 2 && -d $dlc && $1 == b ]]; then
@@ -426,22 +398,22 @@ elif [[ $# -eq 4 && -d $4 && $1 == fp && $2 == -l ]];then
     fnd_p -l
 
 # play previous file saved
-elif [[ $# -eq 1 && $1 == -p ]];then 
+elif [[ $# -eq 1 && $1 == -p ]];then
     if [[ -f ${HIST_FILE} ]];then # check if file exists
-        fnd `cat ${HIST_FILE}` 
-    else 
+        fnd `cat ${HIST_FILE}`
+    else
         echo -e "\e[031mYou haven't downloaded any file!"
         exit 1
     fi
 
-elif [[ $1 == -s* ]];then # stream file(s) 
+elif [[ $1 == -s* ]];then # stream file(s)
     if command -v mpv &>/dev/null ;then
         format_selector(){
             case $1 in
                 -sa) opt=$aID ;;-sb) opt=$bID ;;-sc) opt=$cID ;;-sd) opt=$dID ;;-sv) opt=$vID ;;-se) opt=$eID ;;-sf) opt=$fID
                 ;;
-                    
-                *) 
+
+                *)
                 formats="
             \e[035ma\e[0m: 1080p Video
             \e[035mb\e[0m: 1440p Video
@@ -473,7 +445,7 @@ elif [[ $1 == -s* ]];then # stream file(s)
         exit $?
     fi
 
-else 
+else
     echo -e "\e[031mplease re-run script and give correct arguments accordingly\e[0m"
     echo -e "Usage: $(basename $0) {OPTION} <url> | <destination>
     Options:
